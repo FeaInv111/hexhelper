@@ -1,0 +1,5 @@
+.sessdata
+.venv/
+data/subs/
+__pycache__/
+.DS_Store
