@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f1115">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>海斗速查 · 以小冬攻略</title>
+<style>
+:root {
+  --bg: #0f1115; --panel: #181b22; --line: #262a33; --text: #e8e6e3; --dim: #8b8f98;
+  --gold: #e8b94a; --prism: #c792ea; --silver: #b8c4d0; --accent: #fb7299;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; background: var(--bg); color: var(--text);
+  font: 15px/1.5 -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+img { display: block; }
+
+/* 搜索页 */
+header { position: sticky; top: 0; z-index: 2; background: var(--bg);
+  padding: calc(10px + env(safe-area-inset-top)) 12px 8px; border-bottom: 1px solid var(--line); }
+.search { display: flex; gap: 8px; }
+.search input { flex: 1; min-width: 0; height: 42px; padding: 0 14px; border-radius: 10px;
+  border: 1px solid var(--line); background: var(--panel); color: var(--text); font-size: 17px; outline: none; }
+.search input:focus { border-color: var(--accent); }
+.search button { padding: 0 12px; border-radius: 10px; background: var(--panel); border: 1px solid var(--line);
+  color: var(--dim); font-size: 13px; white-space: nowrap; }
+.search button.on { color: var(--accent); border-color: var(--accent); }
+.hint { color: var(--dim); font-size: 12px; margin-top: 6px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 10px 6px; padding: 12px; }
+.champ { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 12px; }
+.champ img { width: 56px; height: 56px; border-radius: 10px; border: 2px solid transparent; }
+.champ.has img { border-color: var(--gold); }
+.champ.no { opacity: .35; }
+.champ span { max-width: 64px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.empty { text-align: center; color: var(--dim); padding: 40px 0; }
+
+/* 攻略页 */
+#detail { position: fixed; inset: 0; z-index: 5; background: var(--bg); overflow-y: auto;
+  -webkit-overflow-scrolling: touch; display: none; }
+#detail.show { display: block; }
+.top { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; gap: 10px;
+  padding: calc(10px + env(safe-area-inset-top)) 12px 10px; background: var(--bg); border-bottom: 1px solid var(--line); }
+.top .back { font-size: 22px; width: 32px; height: 32px; }
+.top img { width: 44px; height: 44px; border-radius: 8px; }
+.top .nm { font-size: 18px; font-weight: 600; }
+.top .tt { font-size: 12px; color: var(--dim); }
+.tabs { display: flex; gap: 6px; padding: 10px 12px 0; overflow-x: auto; }
+.tabs button { padding: 4px 10px; border-radius: 99px; border: 1px solid var(--line); font-size: 12px; color: var(--dim); white-space: nowrap; }
+.tabs button.on { color: var(--text); border-color: var(--accent); }
+.body { padding: 12px 12px calc(24px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 12px; }
+.headline { font-size: 18px; font-weight: 600; color: var(--accent); }
+.sec { background: var(--panel); border-radius: 12px; padding: 12px; }
+.sec h3 { margin: 0 0 8px; font-size: 13px; color: var(--dim); font-weight: 500; }
+.bgroup + .bgroup { margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--line); }
+.blabel { font-size: 13px; font-weight: 600; }
+.blabel small { font-weight: 400; color: var(--dim); margin-left: 6px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.chip { display: flex; align-items: center; gap: 5px; padding: 3px 8px 3px 3px; border-radius: 8px;
+  background: #20242d; font-size: 13px; }
+.chip b { font-weight: 400; }
+.chip[data-a] b { border-bottom: 1px dotted var(--dim); }
+.chip img { width: 24px; height: 24px; border-radius: 5px; }
+.chip.noimg { padding-left: 8px; }
+.arrow { color: var(--dim); align-self: center; font-size: 12px; }
+.aug-row { display: flex; gap: 8px; align-items: flex-start; }
+.aug-row + .aug-row { margin-top: 8px; }
+.aug-row .tag { flex: none; width: 34px; font-size: 12px; font-weight: 600; padding-top: 6px; }
+.aug-row .chips { margin-top: 0; }
+.prismatic .tag { color: var(--prism); } .prismatic .chip { box-shadow: inset 0 0 0 1px #c792ea55; }
+.gold .tag { color: var(--gold); } .gold .chip { box-shadow: inset 0 0 0 1px #e8b94a55; }
+.silver .tag { color: var(--silver); } .silver .chip { box-shadow: inset 0 0 0 1px #b8c4d044; }
+.tips { margin: 0; padding-left: 18px; }
+.tips li + li { margin-top: 4px; }
+.video { display: block; text-align: center; padding: 12px; border-radius: 12px; background: var(--accent);
+  color: #fff; text-decoration: none; font-weight: 600; }
+.meta { text-align: center; color: var(--dim); font-size: 12px; }
+.none { padding: 40px 16px; text-align: center; color: var(--dim); }
+</style>
+</head>
+<body>
+<header>
+  <div class="search">
+    <input id="q" type="search" placeholder="搜英雄：亚索 / ys / 快乐风男" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="go">
+    <button id="all">全部英雄</button>
+  </div>
+  <div class="hint" id="hint"></div>
+</header>
+<main class="grid" id="grid"></main>
+<section id="detail"></section>
+
+<script src="data.js"></script>
+<script>
+const { champions, guides, icons, nick } = window.HEX_DATA;
+const byKey = Object.fromEntries(champions.map(c => [c.key, c]));
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[ch]);
+let showAll = false;
+let openedInApp = false; // 直接打开带 # 的链接时，返回键不能用 history.back()
+
+const guided = c => !!guides[c.id];
+const guideCount = champions.filter(guided).length;
+
+// 搜索打分：完全匹配 > 前缀 > 包含；有攻略的排前面
+function score(c, q) {
+  let best = 0;
+  for (const k of c.keys) {
+    if (k === q) return 3;
+    if (k.startsWith(q)) best = Math.max(best, 2);
+    else if (k.includes(q)) best = Math.max(best, 1);
+  }
+  return best;
+}
+
+function search(q) {
+  q = q.trim().toLowerCase().replace(/\s+/g, "");
+  if (!q) return champions.filter(c => showAll || guided(c));
+  return champions
+    .map(c => [c, score(c, q)])
+    .filter(([, s]) => s > 0)
+    .sort((a, b) => b[1] - a[1] || guided(b[0]) - guided(a[0]))
+    .map(([c]) => c);
+}
+
+function renderGrid() {
+  const q = $("#q").value;
+  const list = search(q);
+  $("#hint").textContent = q.trim()
+    ? `找到 ${list.length} 个，回车直接打开第一个`
+    : `${showAll ? "全部英雄，金框是有攻略的" : "以小冬已出攻略的英雄"}，共 ${showAll ? champions.length : guideCount} 个`;
+  $("#grid").innerHTML = list.length
+    ? list.map(c => `<button class="champ ${guided(c) ? "has" : q.trim() ? "no" : ""}" data-key="${c.key}">
+        <img src="img/champ/${c.id}.jpg" alt="" loading="lazy" width="56" height="56"><span>${esc(c.aliases[0] || c.name)}</span></button>`).join("")
+    : `<div class="empty">没找到，换个叫法试试</div>`;
+}
+
+// 装备显示俗称，点一下切换成官方全名
+function chip(name, iconKey, short = name) {
+  const src = icons[iconKey];
+  const swap = short !== name ? ` data-a="${esc(short)}" data-b="${esc(name)}"` : "";
+  return src
+    ? `<span class="chip"${swap}><img src="${src}" alt="" loading="lazy" width="24" height="24"><b>${esc(short)}</b></span>`
+    : `<span class="chip noimg"${swap}><b>${esc(short)}</b></span>`;
+}
+
+function fmtDate(ts) {
+  const d = new Date(ts * 1000);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function renderGuide(g) {
+  const build = (g.build || []).map(b => `<div class="bgroup">
+      <div class="blabel">${esc(b.title)}${b.note ? `<small>${esc(b.note)}</small>` : ""}</div>
+      <div class="chips">${b.items.map(n => chip(n, n, nick[n] || n)).join('<span class="arrow">›</span>')}</div></div>`).join("");
+  const AUG = [["prismatic", "彩色"], ["gold", "金色"], ["silver", "白色"]];
+  const augs = AUG.filter(([r]) => g.augments?.[r]?.length).map(([r, label]) => `<div class="aug-row ${r}">
+      <div class="tag">${label}</div><div class="chips">${g.augments[r].map(n => chip(n, "aug:" + n)).join("")}</div></div>`).join("");
+  const tips = (g.tips || []).map(t => `<li>${esc(t)}</li>`).join("");
+  return `
+    ${g.headline ? `<div class="headline">${esc(g.headline)}</div>` : ""}
+    ${build ? `<div class="sec"><h3>出装</h3>${build}</div>` : ""}
+    ${augs ? `<div class="sec"><h3>推荐海克斯</h3>${augs}</div>` : ""}
+    ${tips ? `<div class="sec"><h3>注意事项</h3><ul class="tips">${tips}</ul></div>` : ""}
+    <a class="video" href="https://www.bilibili.com/video/${g.bvid}" target="_blank" rel="noopener">▶ 看原视频</a>
+    <div class="meta">${fmtDate(g.pubdate)} 发布<br>${esc(g.title)}</div>`;
+}
+
+function openChamp(key, tab = 0) {
+  const c = byKey[key];
+  if (!c) return closeDetail();
+  const list = guides[c.id] || [];
+  const d = $("#detail");
+  d.innerHTML = `
+    <div class="top">
+      <button class="back" aria-label="返回">‹</button>
+      <img src="img/champ/${c.id}.jpg" alt="">
+      <div><div class="nm">${esc(c.name)}</div><div class="tt">${esc(c.title)}${c.aliases.length ? " · " + esc(c.aliases.join(" / ")) : ""}</div></div>
+    </div>
+    ${list.length > 1 ? `<div class="tabs">${list.map((g, i) =>
+      `<button data-tab="${i}" class="${i === tab ? "on" : ""}">${fmtDate(g.pubdate)}${i === 0 ? "（最新）" : ""}</button>`).join("")}</div>` : ""}
+    <div class="body">${list.length ? renderGuide(list[tab]) : `<div class="none">以小冬还没出这个英雄的攻略</div>`}</div>`;
+  d.classList.add("show");
+  d.scrollTop = 0;
+  d.querySelector(".back").onclick = () => openedInApp ? history.back() : (location.hash = "");
+  d.querySelectorAll("[data-a]").forEach(el => el.onclick = () => {
+    const t = el.querySelector("b");
+    t.textContent = t.textContent === el.dataset.a ? el.dataset.b : el.dataset.a;
+  });
+  d.querySelectorAll("[data-tab]").forEach(b => b.onclick = () => openChamp(key, +b.dataset.tab));
+}
+
+function go(key) {
+  openedInApp = true;
+  location.hash = key;
+}
+
+function closeDetail() {
+  $("#detail").classList.remove("show");
+}
+
+function route() {
+  const key = decodeURIComponent(location.hash.slice(1));
+  key ? openChamp(key) : closeDetail();
+}
+
+$("#q").addEventListener("input", renderGrid);
+$("#q").addEventListener("keydown", e => {
+  if (e.key !== "Enter") return;
+  const first = search($("#q").value)[0];
+  if (first) { $("#q").blur(); go(first.key); }
+});
+$("#grid").addEventListener("click", e => {
+  const b = e.target.closest(".champ");
+  if (b) go(b.dataset.key);
+});
+$("#all").addEventListener("click", () => {
+  showAll = !showAll;
+  $("#all").classList.toggle("on", showAll);
+  renderGrid();
+});
+window.addEventListener("hashchange", route);
+
+renderGrid();
+route();
+</script>
+</body>
+</html>
