@@ -2,6 +2,7 @@
 # 重新构建并发布到 GitHub Pages（gh-pages 分支 = site/ 目录）
 set -e
 cd "$(dirname "$0")/.."
+.venv/bin/python scripts/sync_aliases.py
 .venv/bin/python scripts/build.py
 .venv/bin/python scripts/alias_report.py
 git add -A
