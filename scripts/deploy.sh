@@ -5,6 +5,7 @@ cd "$(dirname "$0")/.."
 .venv/bin/python scripts/sync_aliases.py
 .venv/bin/python scripts/build.py
 .venv/bin/python scripts/alias_report.py
+.venv/bin/python scripts/pending_report.py
 git add -A
 git commit -qm "${1:-更新攻略数据}" || true
 # 连 GitHub 偶尔抖动，失败重试几次
